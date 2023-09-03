@@ -10,6 +10,7 @@ public class TerrainGeneration : MonoBehaviour
     public int dirtLayerHeight = 5;
     public float heightMultiplier = 4f;
     public int heightAddition = 25;
+    public int chunkSize = 16;
     public bool generateCaves = true;
 
     [Header("Tree Config")]
@@ -33,6 +34,7 @@ public class TerrainGeneration : MonoBehaviour
     public Sprite treeLeaf;
 
     private List<Vector2> tilePositions = new();
+    private GameObject[] worldChunks;
     private float gridOffset = 0.5f;
 
     public void Start()
@@ -40,10 +42,30 @@ public class TerrainGeneration : MonoBehaviour
         seed = Random.Range(-1000000, 1000000);
 
         GenerateNoiseTexture();
+        CreateChunks();
         GenerateTerrain();
     }
 
-    public void PlaceTile(Sprite tileSprite, float x, float y)
+    public void CreateChunks()
+    {
+        // Calculate the number of chunks needed to cover the entire world
+        // It does this by dividing the world size by the chunk size
+        // and then adds one if there is a remainder, since we need an extra chunk
+        // to cover the remaining tiles that didn't fit
+        int numChunks = (worldSize / chunkSize) + ((worldSize % chunkSize == 0) ? 0 : 1);
+
+        worldChunks = new GameObject[numChunks];
+
+        for (int i = 0; i < numChunks; i++)
+        {
+            GameObject chunk = new GameObject(name = $"Chunk {i}");
+            chunk.transform.parent = this.transform;
+
+            worldChunks[i] = chunk;
+        }
+    }
+
+    public void PlaceTile(Sprite tileSprite, int x, int y)
     {
         // Create a new tile object
         GameObject newTile = new();
@@ -53,10 +75,17 @@ public class TerrainGeneration : MonoBehaviour
 
         // Set its position in the world, with an offset to align it to the grid
         newTile.transform.position = new Vector2(x + gridOffset, y + gridOffset);
-        // Set parent to the Terrain object
-        newTile.transform.parent = transform;
         // Set the name of the tile to the name of the sprite
         newTile.transform.name = tileSprite.name;
+
+        // Calculate the coordinate of the chunk that the new tile should be placed in based on its x position
+        int chunkCoord = Mathf.FloorToInt(x / chunkSize) * chunkSize;
+
+        // Divide the chunk coordinate by the chunk size to get the index of the corresponding chunk in the worldChunks array
+        chunkCoord /= chunkSize;
+
+        // Set the parent of the new tile to be the game object of the chunk it belongs to
+        newTile.transform.parent = worldChunks[chunkCoord].transform;
 
         // Add the tile position (with the grid offset) to the global list of all tile positions
         tilePositions.Add(newTile.transform.position - (Vector3.one * gridOffset));
@@ -144,7 +173,7 @@ public class TerrainGeneration : MonoBehaviour
         noiseTexture.Apply();
     }
 
-    private void GenerateTree(float x, float y)
+    private void GenerateTree(int x, int y)
     {
         // Generate a random tree height, with + 1 on the max because it's exclusive
         int treeHeight = Random.Range(minTreeHeight, maxTreeHeight + 1);

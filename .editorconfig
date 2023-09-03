@@ -2,6 +2,7 @@ root=true
 
 [*.cs]
 dotnet_diagnostic.IDE0044.severity = none
+dotnet_diagnostic.IDE0003.severity = none
 
 # Code files
 [*.{cs,csx,vb,vbx}]
