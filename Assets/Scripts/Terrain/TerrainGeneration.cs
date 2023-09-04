@@ -19,29 +19,45 @@ public class TerrainGeneration : MonoBehaviour
     public int minTreeHeight = 4;
     public int maxTreeHeight = 6;
 
-    [Header("Noise Settings")]
+    [Header("Ore Config")]
+    public float coalRarity;
+    // The inspector does weird things if coalRarity and coalSize are defined in the same line
+    public float coalSize;
+    public float ironRarity, ironSize;
+    public float goldRarity, goldSize;
+    public float diamondRarity, diamondSize;
+
+    [Space(10)]
+
+    public Texture2D coalSpread;
+    public Texture2D ironSpread;
+    public Texture2D goldSpread;
+    public Texture2D diamondSpread;
+
+    [Header("Noise Config")]
     public float seed = 0f;
     public float caveFrequency = 0.05f;
     public float terrainFrequency = 0.05f;
-    public Texture2D noiseTexture;
+    public Texture2D caveNoiseTexture;
 
-    [Header("Terrain Art")]
-
-    public Sprite grass;
-    public Sprite dirt;
-    public Sprite stone;
-    public Sprite treeLog;
-    public Sprite treeLeaf;
+    [Header("Tile Atlas")]
+    public TileAtlas tileAtlas;
 
     private List<Vector2> tilePositions = new();
     private GameObject[] worldChunks;
     private float gridOffset = 0.5f;
 
+    public void OnValidate()
+    {
+        Init();
+    }
+
     public void Start()
     {
         seed = Random.Range(-1000000, 1000000);
 
-        GenerateNoiseTexture();
+        Init();
+
         CreateChunks();
         GenerateTerrain();
     }
@@ -107,25 +123,33 @@ public class TerrainGeneration : MonoBehaviour
                 if (worldY > terrainHeight - 1)
                 {
                     // If it is, use the grass sprite
-                    tileSprite = grass;
+                    tileSprite = tileAtlas.grass.tileSprite;
                 }
                 // Check if the tile is within the dirt layer
                 else if (worldY > terrainHeight - dirtLayerHeight)
                 {
                     // If it is, use the dirt sprite
-                    tileSprite = dirt;
+                    tileSprite = tileAtlas.dirt.tileSprite;
                 }
                 // Otherwise, the tile is below the dirt layer
                 else
                 {
-                    // Use the stone sprite
-                    tileSprite = stone;
+                    if (coalSpread.GetPixel(worldX, worldY).r > 0.5f)
+                        tileSprite = tileAtlas.coal.tileSprite;
+                    else if (ironSpread.GetPixel(worldX, worldY).r > 0.5f)
+                        tileSprite = tileAtlas.iron.tileSprite;
+                    else if (goldSpread.GetPixel(worldX, worldY).r > 0.5f)
+                        tileSprite = tileAtlas.gold.tileSprite;
+                    else if (diamondSpread.GetPixel(worldX, worldY).r > 0.5f)
+                        tileSprite = tileAtlas.diamond.tileSprite;
+                    else
+                        tileSprite = tileAtlas.stone.tileSprite;
                 }
 
                 if (generateCaves)
                 {
-                    // Check if the current pixel value is greater than the surface threshold
-                    if (noiseTexture.GetPixel(worldX, worldY).r > surfaceThreshold)
+                    // Check if the current pixel value is greater than 0.5f
+                    if (caveNoiseTexture.GetPixel(worldX, worldY).r > 0.5f)
                     {
                         PlaceTile(tileSprite, worldX, worldY);
                     }
@@ -154,19 +178,37 @@ public class TerrainGeneration : MonoBehaviour
         }
     }
 
-    private void GenerateNoiseTexture()
+    private void Init()
     {
-        noiseTexture = new Texture2D(worldSize, worldSize);
+        if (caveNoiseTexture == null)
+        {
+            caveNoiseTexture = new Texture2D(worldSize, worldSize);
+            coalSpread = new Texture2D(worldSize, worldSize);
+            ironSpread = new Texture2D(worldSize, worldSize);
+            goldSpread = new Texture2D(worldSize, worldSize);
+            diamondSpread = new Texture2D(worldSize, worldSize);
+        }
 
+        GenerateNoiseTexture(caveFrequency, surfaceThreshold, caveNoiseTexture);
+
+        GenerateNoiseTexture(coalRarity, coalSize, coalSpread);
+        GenerateNoiseTexture(ironRarity, ironSize, ironSpread);
+        GenerateNoiseTexture(goldRarity, goldSize, goldSpread);
+        GenerateNoiseTexture(diamondRarity, diamondSize, diamondSpread);
+    }
+
+    private void GenerateNoiseTexture(float frequency, float limit, Texture2D noiseTexture)
+    {
         for (int x = 0; x < noiseTexture.width; x++)
         {
             for (int y = 0; y < noiseTexture.height; y++)
             {
                 // Generate noise value based on x, seed and noiseFrequency
-                float noiseValue = Mathf.PerlinNoise((x + seed) * caveFrequency, (y + seed) * caveFrequency);
-
-                // Set the pixel color to the generated noise color
-                noiseTexture.SetPixel(x, y, new Color(noiseValue, noiseValue, noiseValue));
+                float noiseValue = Mathf.PerlinNoise((x + seed) * frequency, (y + seed) * frequency);
+                if (noiseValue > limit)
+                    noiseTexture.SetPixel(x, y, Color.white);
+                else
+                    noiseTexture.SetPixel(x, y, Color.black);
             }
         }
 
@@ -193,25 +235,25 @@ public class TerrainGeneration : MonoBehaviour
         // Tree logs (d)
         for (int i = 0; i < treeHeight; i++)
         {
-            PlaceTile(treeLog, x, y + i);
+            PlaceTile(tileAtlas.treeLog.tileSprite, x, y + i);
         }
 
         // Tree leaves (a, b, c)
 
         // Center column of leaves (c)
-        PlaceTile(treeLeaf, x, y + treeHeight);
-        PlaceTile(treeLeaf, x, y + treeHeight + 1);
-        PlaceTile(treeLeaf, x, y + treeHeight + 2);
+        PlaceTile(tileAtlas.treeLeaf.tileSprite, x, y + treeHeight);
+        PlaceTile(tileAtlas.treeLeaf.tileSprite, x, y + treeHeight + 1);
+        PlaceTile(tileAtlas.treeLeaf.tileSprite, x, y + treeHeight + 2);
 
         // Side columns of leaves (b)
-        PlaceTile(treeLeaf, x - 1, y + treeHeight);
-        PlaceTile(treeLeaf, x - 1, y + treeHeight + 1);
+        PlaceTile(tileAtlas.treeLeaf.tileSprite, x - 1, y + treeHeight);
+        PlaceTile(tileAtlas.treeLeaf.tileSprite, x - 1, y + treeHeight + 1);
 
-        PlaceTile(treeLeaf, x + 1, y + treeHeight);
-        PlaceTile(treeLeaf, x + 1, y + treeHeight + 1);
+        PlaceTile(tileAtlas.treeLeaf.tileSprite, x + 1, y + treeHeight);
+        PlaceTile(tileAtlas.treeLeaf.tileSprite, x + 1, y + treeHeight + 1);
 
         // Leaves to left and right of side column (a)
-        PlaceTile(treeLeaf, x + 2, y + treeHeight);
-        PlaceTile(treeLeaf, x - 2, y + treeHeight);
+        PlaceTile(tileAtlas.treeLeaf.tileSprite, x + 2, y + treeHeight);
+        PlaceTile(tileAtlas.treeLeaf.tileSprite, x - 2, y + treeHeight);
     }
 }
