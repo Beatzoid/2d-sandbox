@@ -17,6 +17,7 @@ MonoBehaviour:
   stone: {fileID: 11400000, guid: b23c803419876474fb38d4e4b5cc6925, type: 2}
   treeLog: {fileID: 11400000, guid: 303360f6815a943019f4aae950bd9e9b, type: 2}
   treeLeaf: {fileID: 11400000, guid: b89d7258d71c54a028ab43fec571c494, type: 2}
+  tallGrass: {fileID: 11400000, guid: e6805e9ff0e1448468a1e15582a8aad2, type: 2}
   coal: {fileID: 11400000, guid: 7e7a8737bf7f14a5faff7d0321a9b00e, type: 2}
   iron: {fileID: 11400000, guid: 4c29a510431c34022a924f1150f4468e, type: 2}
   gold: {fileID: 11400000, guid: d2107a226afd440a09c27260098532c0, type: 2}

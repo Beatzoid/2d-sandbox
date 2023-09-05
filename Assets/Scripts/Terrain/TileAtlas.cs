@@ -8,6 +8,7 @@ public class TileAtlas : ScriptableObject
     public Tile stone;
     public Tile treeLog;
     public Tile treeLeaf;
+    public Tile tallGrass;
 
     [Space(10)]
 

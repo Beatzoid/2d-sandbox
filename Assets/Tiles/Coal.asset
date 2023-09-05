@@ -13,4 +13,6 @@ MonoBehaviour:
   m_Name: Coal
   m_EditorClassIdentifier: 
   tileName: Coal
-  tileSprite: {fileID: 21300000, guid: 3df6b3ed484ac41feaa09c13e5d2da31, type: 3}
+  tileSprites:
+  - {fileID: 21300000, guid: 3df6b3ed484ac41feaa09c13e5d2da31, type: 3}
+  - {fileID: 21300000, guid: 10d436a310fe7401a9039b9fc1f8205d, type: 3}

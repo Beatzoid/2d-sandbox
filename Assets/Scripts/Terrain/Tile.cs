@@ -4,5 +4,6 @@ using UnityEngine;
 public class Tile : ScriptableObject
 {
     public string tileName;
-    public Sprite tileSprite;
+    // public Sprite tileSprite;
+    public Sprite[] tileSprites;
 }

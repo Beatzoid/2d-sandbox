@@ -10,8 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 62b2e257ddbaf4106b3f66c9d68d23f5, type: 3}
-  m_Name: Grass
+  m_Name: TallGrass
   m_EditorClassIdentifier: 
   tileName: Grass
   tileSprites:
-  - {fileID: 21300000, guid: ac0d71008ae78495c8298e6451380259, type: 3}
+  - {fileID: 21300000, guid: 84af080b6fd3f4840b09806017d94875, type: 3}
+  - {fileID: 21300000, guid: eddb14faad39e4b5db9c3ad87c6192df, type: 3}
+  - {fileID: 21300000, guid: 0b39736d0f19e4debaf4db9619d0c0bd, type: 3}
+  - {fileID: 21300000, guid: 9f162e8f9143f47e5baf54859fa09703, type: 3}
+  - {fileID: 21300000, guid: 9f162e8f9143f47e5baf54859fa09703, type: 3}
