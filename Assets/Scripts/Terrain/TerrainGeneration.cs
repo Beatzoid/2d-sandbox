@@ -1,8 +1,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+[System.Serializable]
 public class TerrainGeneration : MonoBehaviour
 {
+    public Biome[] biomes;
+
     [Header("Generation Config")]
 
     public int worldSize = 100;
@@ -12,6 +15,11 @@ public class TerrainGeneration : MonoBehaviour
     public int heightAddition = 25;
     public int chunkSize = 16;
     public bool generateCaves = true;
+
+    [Header("Biome Config")]
+    public Gradient biomeColors;
+    public float biomeFrequency;
+    public Texture2D biomeNoiseMap;
 
     [Header("Tree Config")]
 
@@ -59,7 +67,6 @@ public class TerrainGeneration : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.R))
         {
             seed = Random.Range(-1000000, 1000000);
-            Debug.Log(seed);
 
             // Destroy all chunks
             foreach (GameObject chunk in worldChunks)
@@ -70,6 +77,7 @@ public class TerrainGeneration : MonoBehaviour
             // Clear the list of tile positions
             tilePositions.Clear();
 
+            // Re-init everything
             Init();
 
             // Create new chunks
@@ -101,6 +109,11 @@ public class TerrainGeneration : MonoBehaviour
 
     public void PlaceTile(Sprite[] tileSprites, int x, int y)
     {
+        // Check to see if the tile position is already occupied
+        // in which case we return, because we don't want to
+        // overlap/override existing tiles
+        if (tilePositions.Contains(new Vector2Int(x, y))) return;
+
         // Create a new tile object
         GameObject newTile = new();
 
@@ -156,6 +169,11 @@ public class TerrainGeneration : MonoBehaviour
                 else
                 {
                     tileSprites = tileAtlas.stone.tileSprites;
+
+                    // Check if there is supposed to be a ore at this position based
+                    // on the generated noise, and also check if the current y level
+                    // is far enough away from the surface (based on the terrain height)
+                    // so that the ore can generate
 
                     if (ores[0].spreadTexture.GetPixel(worldX, worldY).r > 0.5f && terrainHeight - worldY > ores[0].minDistanceFromSurfaceToGenerate)
                         tileSprites = tileAtlas.coal.tileSprites;
@@ -216,19 +234,37 @@ public class TerrainGeneration : MonoBehaviour
 
     private void Init()
     {
-        caveNoiseTexture = new Texture2D(worldSize, worldSize);
+        biomeNoiseMap = new Texture2D(worldSize, worldSize);
+        GenerateBiomeTexture();
 
-        for (int i = 0; i < ores.Length; i++)
+        for (int i = 0; i < biomes.Length; i++)
         {
-            ores[i].spreadTexture = new Texture2D(worldSize, worldSize);
+            for (int j = 0; j < biomes[i].ores.Length; j++)
+            {
+                biomes[i].ores[j].spreadTexture = new Texture2D(worldSize, worldSize);
+
+                GenerateNoiseTexture(biomes[i].ores[j].rarity, biomes[i].ores[j].size, biomes[i].ores[j].spreadTexture);
+            }
+
+            biomes[i].caveNoiseTexture = new Texture2D(worldSize, worldSize);
+            GenerateNoiseTexture(biomes[i].caveFrequency, biomes[i].surfaceThreshold, biomes[i].caveNoiseTexture);
+        }
+    }
+
+    private void GenerateBiomeTexture()
+    {
+        for (int x = 0; x < biomeNoiseMap.width; x++)
+        {
+            for (int y = 0; y < biomeNoiseMap.height; y++)
+            {
+                float noiseValue = Mathf.PerlinNoise((x + seed) * biomeFrequency, seed * biomeFrequency);
+
+                Color color = biomeColors.Evaluate(noiseValue);
+                biomeNoiseMap.SetPixel(x, y, color);
+            }
         }
 
-        GenerateNoiseTexture(caveFrequency, surfaceThreshold, caveNoiseTexture);
-
-        for (int i = 0; i < ores.Length; i++)
-        {
-            GenerateNoiseTexture(ores[i].rarity, ores[i].size, ores[i].spreadTexture);
-        }
+        biomeNoiseMap.Apply();
     }
 
     private void GenerateNoiseTexture(float frequency, float limit, Texture2D noiseTexture)
